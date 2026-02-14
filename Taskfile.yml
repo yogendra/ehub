@@ -1,0 +1,34 @@
+version: "3"
+
+vars:
+  CONDA_ENV: ehub
+
+tasks:
+  setup:
+    desc: Set up the project (conda)
+    cmds:
+      - conda env create -f environment.yml || conda env update -f environment.yml --prune
+      - cp -n .env.example .env || true
+
+  lint:
+    desc: Run linting tools
+    cmds:
+      - conda run -n {{.CONDA_ENV}} ruff check .
+      - conda run -n {{.CONDA_ENV}} black --check .
+      - conda run -n {{.CONDA_ENV}} mypy .
+
+  test:
+    desc: Run all tests
+    cmds:
+      - task: core:test
+      - task: cli:test
+
+  core:test:
+    desc: Run tests for ehub-core
+    cmds:
+      - cd ehub-core && task test
+
+  cli:test:
+    desc: Run tests for ehub-cli
+    cmds:
+      - cd ehub-cli && task test

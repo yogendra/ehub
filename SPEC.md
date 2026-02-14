@@ -68,3 +68,11 @@ Provision Cloud Core-Infrastructure (VPC, Subnet, Security Group, SSH, etc).
 
 - Type: Entity Workflow
 - Human In Loop: Yes - Promote Build
+
+## Temporal
+
+| Workflow                 | Queue           | Description                           |
+| ------------------------ | --------------- | ------------------------------------- |
+| CoreInfraWorkflow        | ehub-core-infra | Core Infrastructure Management        |
+| ApplicationInfraWorkflow | ehub-app-infra  | Application Infrastructure Management |
+| CICDWorkflow             | ehub-cicd       | CI / CD                               |
