@@ -11,6 +11,7 @@ This directory contains the development rules and standards for the eHub project
 - **004-infrastructure-code.md**: Infrastructure as Code standards (Terraform, security)
 - **005-taskfile-standards.md**: Taskfile patterns (compose/cascade, task design, workflows)
 - **006-python-local-dev.md**: Python (conda) and local development (Docker/Compose)
+- **007-agent-logging.md**: Agent interaction recording and log structure
 
 ## How to Use
 
