@@ -1,0 +1,204 @@
+version: "3"
+
+vars:
+  TEMPORAL_ADDR: 'localhost:7233'
+  CORE_WF_ID: 'core-infra-test-{{.USER | default "user"}}'
+  APP_WF_ID: 'app-infra-test-{{.USER | default "user"}}'
+  CICD_WF_ID: 'cicd-test-{{.USER | default "user"}}'
+
+tasks:
+  # ========================================================================
+  # CORE INFRASTRUCTURE WORKFLOW
+  # ========================================================================
+
+  core-start:
+    desc: "[Core] Start Workflow"
+    cmds:
+      - |
+        temporal workflow start \
+          --address {{.TEMPORAL_ADDR}} \
+          --task-queue ehub-core-infra \
+          --type CoreInfraWorkflow \
+          --workflow-id {{.CORE_WF_ID}} \
+          --input '{"project_id": "test-project", "region": "us-east-1"}'
+
+  core-approve:
+    desc: "[Core] Signal: Approve"
+    cmds:
+      - |
+        temporal workflow signal \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CORE_WF_ID}} \
+          --name approve \
+          --input '{"approved": true, "cidr": "10.0.0.0/16"}'
+
+  core-reject:
+    desc: "[Core] Signal: Reject"
+    cmds:
+      - |
+        temporal workflow signal \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CORE_WF_ID}} \
+          --name approve \
+          --input '{"approved": false, "cidr": "10.0.0.0/16"}'
+
+  core-query:
+    desc: "[Core] Query state"
+    cmds:
+      - |
+        temporal workflow query \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CORE_WF_ID}} \
+          --type get_state
+
+  core-terminate:
+    desc: "[Core] Terminate Workflow"
+    cmds:
+      - |
+        temporal workflow terminate \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CORE_WF_ID}}
+
+  core-full-approve:
+    desc: "[Core] E2E: Start + Approve"
+    cmds:
+      - task: core-start
+      - sleep 2
+      - task: core-approve
+
+  core-full-reject:
+    desc: "[Core] E2E: Start + Reject"
+    cmds:
+      - task: core-start
+      - sleep 2
+      - task: core-reject
+
+  # ========================================================================
+  # APPLICATION INFRASTRUCTURE WORKFLOW
+  # ========================================================================
+
+  app-start:
+    desc: "[App] Start Workflow"
+    cmds:
+      - |
+        temporal workflow start \
+          --address {{.TEMPORAL_ADDR}} \
+          --task-queue ehub-app-infra \
+          --type AppInfraWorkflow \
+          --workflow-id {{.APP_WF_ID}} \
+          --input '{"size": "large"}'
+
+  app-terminate:
+    desc: "[App] Terminate Workflow"
+    cmds:
+      - |
+        temporal workflow terminate \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.APP_WF_ID}}
+
+  # ========================================================================
+  # CICD WORKFLOW
+  # ========================================================================
+
+  cicd-start:
+    desc: "[CICD] Start Workflow"
+    cmds:
+      - |
+        temporal workflow start \
+          --address {{.TEMPORAL_ADDR}} \
+          --task-queue ehub-cicd \
+          --type CICDWorkflow \
+          --workflow-id {{.CICD_WF_ID}} \
+          --input '{"project": "my-app", "sha": "abcd123", "requires_approval": true}'
+
+  cicd-approve:
+    desc: "[CICD] Signal: Approve (Promote to Prod)"
+    cmds:
+      - |
+        temporal workflow signal \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CICD_WF_ID}} \
+          --name approve \
+          --input 'true'
+
+  cicd-reject:
+    desc: "[CICD] Signal: Reject (Stop at Test)"
+    cmds:
+      - |
+        temporal workflow signal \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CICD_WF_ID}} \
+          --name approve \
+          --input 'false'
+
+  cicd-query:
+    desc: "[CICD] Query state"
+    cmds:
+      - |
+        temporal workflow query \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CICD_WF_ID}} \
+          --type get_state
+
+  cicd-terminate:
+    desc: "[CICD] Terminate Workflow"
+    cmds:
+      - |
+        temporal workflow terminate \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CICD_WF_ID}}
+
+  cicd-full-approve:
+    desc: "[CICD] E2E: Start + Approve"
+    cmds:
+      - task: cicd-start
+      - sleep 5
+      - task: cicd-approve
+
+  cicd-full-reject:
+    desc: "[CICD] E2E: Start + Reject"
+    cmds:
+      - task: cicd-start
+      - sleep 5
+      - task: cicd-reject
+
+  # ========================================================================
+  # GENERIC WORKFLOW MANAGEMENT
+  # ========================================================================
+
+  list:
+    desc: "List workflows"
+    cmds:
+      - temporal workflow list --address {{.TEMPORAL_ADDR}}
+
+  terminate:
+    desc: "Terminate a workflow (use WF_ID=...)"
+    vars:
+      ID: '{{.WF_ID | default .CORE_WF_ID}}'
+    cmds:
+      - |
+        temporal workflow terminate \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.ID}}
+
+  delete:
+    desc: "Delete a workflow history (use WF_ID=...)"
+    vars:
+      ID: '{{.WF_ID | default .CORE_WF_ID}}'
+    cmds:
+      - |
+        temporal workflow delete \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.ID}}
+
+  query:
+    desc: "Query any workflow (use WF_ID=... TYPE=...)"
+    vars:
+      ID: '{{.WF_ID | default .CORE_WF_ID}}'
+      TYPE: '{{.QUERY_TYPE | default "get_state"}}'
+    cmds:
+      - |
+        temporal workflow query \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.ID}} \
+          --type {{.TYPE}}

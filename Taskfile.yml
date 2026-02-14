@@ -2,7 +2,17 @@ version: "3"
 
 vars:
   CONDA_ENV: ehub
+  PROJECT_DIR: "{{.ROOT_DIR}}"
 
+
+includes:
+  core:
+    taskfile: ehub-core/Taskfile.yml
+    dir: ehub-core
+  cli:
+    taskfile: ehub-cli/Taskfile.yml
+    dir: ehub-cli
+    
 tasks:
   setup:
     desc: Set up the project (conda)
@@ -22,13 +32,3 @@ tasks:
     cmds:
       - task: core:test
       - task: cli:test
-
-  core:test:
-    desc: Run tests for ehub-core
-    cmds:
-      - cd ehub-core && task test
-
-  cli:test:
-    desc: Run tests for ehub-cli
-    cmds:
-      - cd ehub-cli && task test
