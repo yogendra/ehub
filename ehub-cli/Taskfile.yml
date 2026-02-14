@@ -1,0 +1,15 @@
+version: "3"
+
+vars:
+  CONDA_ENV: ehub
+
+tasks:
+  run:
+    desc: Run the ehub-cli
+    cmds:
+      - conda run -n {{.CONDA_ENV}} python src/main.py {{.CLI_ARGS}}
+
+  test:
+    desc: Run tests for ehub-cli
+    cmds:
+      - conda run -n {{.CONDA_ENV}} pytest tests/unit -v
