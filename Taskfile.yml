@@ -8,6 +8,8 @@ vars:
 includes:
   core:
     taskfile: ehub-core/Taskfile.yml
+    env:
+      PROJECT_ROOT: "{{.ROOT_DIR}}/ehub-core"
     dir: ehub-core
   cli:
     taskfile: ehub-cli/Taskfile.yml
