@@ -1,12 +1,12 @@
 module "test" {
-  source          = "../"
-  region          = "us-east-1"
-  project_id      = "test-project"
-  hostname        = "app.example.com"
-  lb_id           = "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"
-  route53_zone_id = "Z123456789"
+  source           = "../"
+  region           = "us-east-1"
+  project_id       = "test-project"
+  hostname         = "app"
+  lb_arn           = "arn:aws:elasticloadbalancing:us-east-1:503014014885:loadbalancer/app/test-project-lb/389a80fbe7d2ec64"
+  hosted_zone_name = "demo.yogendra.me"
 }
 
-output "fqdn" {
-  value = module.test.fqdn
+output "url" {
+  value = module.test.url
 }

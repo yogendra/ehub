@@ -26,22 +26,26 @@ variable "hostname" {
   type        = string
 }
 
-variable "lb_id" {
-  description = "The ARN/ID of the load balancer"
+variable "lb_arn" {
+  description = "The ARN of the load balancer"
   type        = string
 }
 
-variable "route53_zone_id" {
-  description = "The Route53 hosted zone ID"
+variable "hosted_zone_name" {
+  description = "The route53hosted zone name"
   type        = string
 }
 
 data "aws_lb" "selected" {
-  arn = var.lb_id
+  arn = var.lb_arn
+}
+
+data "aws_route53_zone" "selected" {
+  name = var.hosted_zone_name
 }
 
 resource "aws_route53_record" "app" {
-  zone_id = var.route53_zone_id
+  zone_id = data.aws_route53_zone.selected.zone_id
   name    = var.hostname
   type    = "A"
 
@@ -52,7 +56,7 @@ resource "aws_route53_record" "app" {
   }
 }
 
-output "fqdn" {
-  description = "The fully qualified domain name"
+output "url" {
+  description = "FQDN / URL of the application"
   value       = aws_route53_record.app.fqdn
 }

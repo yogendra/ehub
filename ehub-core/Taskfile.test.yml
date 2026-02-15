@@ -118,17 +118,22 @@ tasks:
     desc: "[App] Start Workflow"
     cmds:
       - |
-        CORE_INFRA=$(task --silent test:core-query | tail -1 | sed 's/  QueryResult  //' | jq)
+        CORE_INFRA=$(task --silent test:core-query | grep -o '{.*}' | jq -c)
         VPC_ID=$(echo $CORE_INFRA | jq -r .vpc_id)
         SUBNET_ID=$(echo $CORE_INFRA | jq -r .subnet_ids[0])
         SECURITY_GROUP_ID=$(echo $CORE_INFRA | jq -r .security_group_id)
         KEY_NAME=$(echo $CORE_INFRA | jq -r .key_name)
+        echo "Starting App Workflow with:"
+        echo "  VPC_ID: $VPC_ID"
+        echo "  SUBNET_ID: $SUBNET_ID"
+        echo "  SECURITY_GROUP_ID: $SECURITY_GROUP_ID"
+        echo "  KEY_NAME: $KEY_NAME"
         temporal workflow start \
           --address {{.TEMPORAL_ADDR}} \
           --task-queue ehub-app-infra \
           --type AppInfraWorkflow \
           --workflow-id {{.APP_WF_ID}} \
-          --input "{\"size\": \"t3.micro\", \"vpc_id\": \"$VPC_ID\", \"subnet_id\": \"$SUBNET_ID\", \"security_group_id\": \"$SECURITY_GROUP_ID\", \"key_name\": \"$KEY_NAME\"}"
+          --input "{\"project_id\": \"test-project\", \"size\": \"t3.micro\", \"vpc_id\": \"$VPC_ID\", \"subnet_id\": \"$SUBNET_ID\", \"security_group_id\": \"$SECURITY_GROUP_ID\", \"key_name\": \"$KEY_NAME\"}"
 
   app-result:
     desc: "[App] Query state"

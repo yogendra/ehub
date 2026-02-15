@@ -26,7 +26,12 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "subnet" {
+variable "security_group_id" {
+  description = "Security group ID"
+  type        = string
+}
+
+variable "subnet_id" {
   description = "Subnet ID"
   type        = string
 }
@@ -47,15 +52,20 @@ data "aws_ami" "ubuntu" {
   owners      = ["099720109477"] # Canonical
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-22.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
+}
+
+data "aws_key_pair" "deployer" {
+  key_name = var.key_name
 }
 
 resource "aws_instance" "app" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.size
-  subnet_id     = var.subnet
-  key_name      = var.key_name
+  subnet_id     = var.subnet_id
+  key_name      = data.aws_key_pair.deployer.key_name
+  security_groups = [var.security_group_id]
 
   tags = {
     Name = "${var.project_id}-ec2"

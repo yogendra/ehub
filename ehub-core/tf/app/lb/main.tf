@@ -31,27 +31,34 @@ variable "ec2_instance_id" {
   type        = string
 }
 
-variable "ports" {
-  description = "List of ports for the LB to listen on"
-  type        = list(number)
+
+
+variable "security_group_id" {
+  description = "Security group ID for the LB"
+  type        = string
 }
 
-variable "subnets" {
-  description = "List of subnets for the LB (required for ALB)"
-  type        = list(string)
+local {
+  ports = [80, 443]
 }
+data "aws_subnets" "public" {
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id]
+  }
 
-variable "security_groups" {
-  description = "List of security groups for the LB"
-  type        = list(string)
+  filter {
+    name   = "tag:Name"
+    values = ["*public*"]
+  }
 }
 
 resource "aws_lb" "app" {
   name               = "${var.project_id}-lb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = var.security_groups
-  subnets            = var.subnets
+  security_groups    = [var.security_group_id]
+  subnets            = data.aws_subnets.public.ids
 
   tags = {
     Name = "${var.project_id}-lb"
@@ -59,35 +66,32 @@ resource "aws_lb" "app" {
 }
 
 resource "aws_lb_target_group" "app" {
-  for_each = toset([for p in var.ports : tostring(p)])
-  name     = "${var.project_id}-tg-${each.key}"
-  port     = tonumber(each.key)
+  name     = "${var.project_id}-tg"
+  port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 }
 
 resource "aws_lb_target_group_attachment" "app" {
-  for_each         = aws_lb_target_group.app
-  target_group_arn = each.value.arn
+  target_group_arn = aws_lb_target_group.app.arn
   target_id        = var.ec2_instance_id
-  port             = each.value.port
+  port             = 80
 }
 
 resource "aws_lb_listener" "app" {
-  for_each          = aws_lb_target_group.app
   load_balancer_arn = aws_lb.app.arn
-  port              = each.value.port
+  port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = each.value.arn
+    target_group_arn = aws_lb_target_group.app.arn
   }
 }
 
-output "lb_id" {
-  description = "The ID of the Load Balancer"
-  value       = aws_lb.app.id
+output "lb_arn" {
+  description = "The ARN of the Load Balancer"
+  value       = aws_lb.app.arn
 }
 
 output "lb_dns_name" {
