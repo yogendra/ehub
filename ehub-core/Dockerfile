@@ -15,12 +15,14 @@ RUN conda env create -f environment.yml && \
 FROM continuumio/miniconda3:latest
 
 # Install runtime dependencies and Terraform
-RUN apt update && apt install -y curl unzip && \
+RUN apt update && apt install -y curl unzip jq && \
     curl -o terraform.zip https://releases.hashicorp.com/terraform/1.7.4/terraform_1.7.4_linux_$(dpkg --print-architecture).zip && \
     unzip terraform.zip -d /usr/local/bin && \
     rm terraform.zip && \
     rm -rf /var/lib/apt/lists/*  &&\
-    curl -sSf https://temporal.download/cli.sh | sh -s -- --install-dir /usr/local/bin
+    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b  /usr/local/bin && \
+    curl -sSf https://temporal.download/cli.sh | sh -s -- --install-dir /usr/local/bin && \
+    cp /root/.temporalio/bin/temporal /usr/local/bin/temporal
 
 
 # Copy the environment from the build stage
@@ -31,6 +33,9 @@ WORKDIR /app
 
 # Copy ehub-core source (context is root)
 COPY ehub-core/src ./src
+COPY ehub-core/tf ./tf
+COPY ehub-core/Taskfile* ./
+
 
 # Set environment variables
 ENV PATH="/opt/conda/envs/ehub/bin:$PATH"
