@@ -1,7 +1,7 @@
 version: "3"
 
 vars:
-  TEMPORAL_ADDR: 'localhost:7233'
+  TEMPORAL_HOST: '{{.TEMPORAL_HOST | default "localhost:7233"}}'
   CORE_WF_ID: 'core-infra-test-{{.USER | default "user"}}'
   APP_WF_ID: 'app-infra-test-{{.USER | default "user"}}'
   CICD_WF_ID: 'cicd-test-{{.USER | default "user"}}'
@@ -17,7 +17,7 @@ tasks:
     cmds:
       - |
         temporal workflow start \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --task-queue ehub-core-infra \
           --type CoreInfraWorkflow \
           --workflow-id {{.CORE_WF_ID}} \
@@ -28,7 +28,7 @@ tasks:
     cmds:
       - |
         temporal workflow signal \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}} \
           --name approve \
           --input '{"approved": true, "cidr": "10.0.0.0/16"}'
@@ -38,7 +38,7 @@ tasks:
     cmds:
       - |
         temporal workflow signal \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}} \
           --name approve \
           --input '{"approved": false, "cidr": "10.0.0.0/16"}'
@@ -48,7 +48,7 @@ tasks:
     cmds:
       - |
         temporal workflow signal \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}} \
           --name update
 
@@ -57,7 +57,7 @@ tasks:
     cmds:
       - |
         temporal workflow signal \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}} \
           --name decomission
 
@@ -66,7 +66,7 @@ tasks:
     cmds:
       - |
         temporal workflow query \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}} \
           --type get_state
 
@@ -75,7 +75,7 @@ tasks:
     cmds:
       - |
         temporal workflow terminate \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}}
 
   core-full-approve:
@@ -129,7 +129,7 @@ tasks:
         echo "  SECURITY_GROUP_ID: $SECURITY_GROUP_ID"
         echo "  KEY_NAME: $KEY_NAME"
         temporal workflow start \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --task-queue ehub-app-infra \
           --type AppInfraWorkflow \
           --workflow-id {{.APP_WF_ID}} \
@@ -140,7 +140,7 @@ tasks:
     cmds:
       - |
         temporal workflow result \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.APP_WF_ID}}
 
   # ========================================================================
@@ -152,7 +152,7 @@ tasks:
     cmds:
       - |
         temporal workflow start \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --task-queue ehub-cicd \
           --type CICDWorkflow \
           --workflow-id {{.CICD_WF_ID}} \
@@ -163,7 +163,7 @@ tasks:
     cmds:
       - |
         temporal workflow signal \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CICD_WF_ID}} \
           --name approve \
           --input 'true'
@@ -173,7 +173,7 @@ tasks:
     cmds:
       - |
         temporal workflow signal \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CICD_WF_ID}} \
           --name approve \
           --input 'false'
@@ -183,7 +183,7 @@ tasks:
     cmds:
       - |
         temporal workflow query \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CICD_WF_ID}} \
           --type get_state
 
@@ -192,7 +192,7 @@ tasks:
     cmds:
       - |
         temporal workflow terminate \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CICD_WF_ID}}
 
   cicd-full-approve:
@@ -216,7 +216,7 @@ tasks:
   list:
     desc: "List workflows"
     cmds:
-      - temporal workflow list --address {{.TEMPORAL_ADDR}}
+      - temporal workflow list --address {{.TEMPORAL_HOST}}
 
   terminate:
     desc: "Terminate a workflow (use WF_ID=...)"
@@ -225,7 +225,7 @@ tasks:
     cmds:
       - |
         temporal workflow terminate \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.ID}}
 
   delete:
@@ -235,7 +235,7 @@ tasks:
     cmds:
       - |
         temporal workflow delete \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.ID}}
 
   query:
@@ -246,6 +246,6 @@ tasks:
     cmds:
       - |
         temporal workflow query \
-          --address {{.TEMPORAL_ADDR}} \
+          --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.ID}} \
           --type {{.TYPE}}
