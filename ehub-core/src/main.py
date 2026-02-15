@@ -1,6 +1,6 @@
 import asyncio
 from temporalio.client import Client
-from temporalio.worker import Worker
+from temporalio.worker import Worker, UnsandboxedWorkflowRunner
 import os
 import logging
 from workflows.core_infra.workflow import CoreInfraWorkflow
@@ -44,6 +44,7 @@ async def main():
             provision_sg,
             provision_sshkey,
         ],
+        workflow_runner=UnsandboxedWorkflowRunner(),
     )
 
     app_worker = Worker(
@@ -55,6 +56,7 @@ async def main():
             provision_lb,
             provision_dns,
         ],
+        workflow_runner=UnsandboxedWorkflowRunner(),
     )
 
     cicd_worker = Worker(
@@ -68,10 +70,37 @@ async def main():
             deploy_to_test,
             deploy_to_prod,
         ],
+        workflow_runner=UnsandboxedWorkflowRunner(),
     )
 
-    logger.info(f"Workers started on {temporal_host}")
-    logger.info("Queues: ehub-core-infra, ehub-app-infra, ehub-cicd")
+    logger.info(
+        f"""
+=====================================================================        
+                                                                                           
+                  ,--,                                                                     
+                ,--.'|                                 ,----..                             
+             ,--,  | :               ,---,            /   /   \                            
+          ,---.'|  : '         ,--,,---.'|           |   :     :  ,---.    __  ,-.         
+          |   | : _' |       ,'_ /||   | :           .   |  ;. / '   ,'\ ,' ,'/ /|         
+   ,---.  :   : |.'  |  .--. |  | ::   : :           .   ; /--` /   /   |'  | |' | ,---.   
+  /     \ |   ' '  ; :,'_ /| :  . |:     |,-.        ;   | ;   .   ; ,. :|  |   ,'/     \  
+ /    /  |'   |  .'. ||  ' | |  . .|   : '  |        |   : |   '   | |: :'  :  / /    /  | 
+.    ' / ||   | :  | '|  | ' |  | ||   |  / :        .   | '___'   | .; :|  | ' .    ' / | 
+'   ;   /|'   : |  : ;:  | : ;  ; |'   : |: |        '   ; : .'|   :    |;  : | '   ;   /| 
+'   |  / ||   | '  ,/ '  :  `--'   \   | '/ :        '   | '/  :\   \  / |  , ; '   |  / | 
+|   :    |;   : ;--'  :  ,      .-./   :    |        |   :    /  `----'   ---'  |   :    | 
+ \   \  / |   ,/       `--`----'   /    \  /          \   \ .'                   \   \  /  
+  `----'  '---'                    `-'----'            `---`                      `----'   
+                                                                                           
+=====================================================================        
+- Temporal host: {temporal_host}
+- Workers:
+    - Workflow: CoreInfraWorkflow  (queue: ehub-core-infra)
+    - Workflow: AppInfraWorkflow   (queue: ehub-app-infra)
+    - Workflow: CICDWorkflow       (queue: ehub-cicd)
+=====================================================================    
+"""
+    )
 
     try:
         await asyncio.gather(
