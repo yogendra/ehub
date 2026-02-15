@@ -3,7 +3,7 @@ import time
 
 
 @activity.defn
-async def provision_ec2(request) -> dict:
+async def provision_ec2(request: dict) -> dict:
     activity.logger.info(f"Provisioning ec2 machine")
 
     # Mock terraform execution
@@ -13,7 +13,7 @@ async def provision_ec2(request) -> dict:
 
 
 @activity.defn
-async def provision_lb(request) -> dict:
+async def provision_lb(request: dict) -> dict:
     activity.logger.info(f"Adding load balancer")
 
     # Mock terraform execution
@@ -21,12 +21,11 @@ async def provision_lb(request) -> dict:
 
     return {
         "lb_id": "lb-12345",
-        "lb_url": "https://elb-12345.us-east-1.elb.amazonaws.com",
     }
 
 
 @activity.defn
-async def provision_dns(request) -> str:
+async def provision_dns(request: dict) -> str:
     activity.logger.info(f"Provisioning app dns")
 
     # Mock terraform execution
