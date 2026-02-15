@@ -4,14 +4,10 @@ vars:
   CONDA_ENV: ehub
 includes:
   test: Taskfile.test.yml
-
+  
 tasks:
   run:
     desc: Run the ehub-core worker
     cmds:
-      - conda run --no-capture-output -n {{.CONDA_ENV}} python src/main.py
+      - PROJECT_ROOT={{.TASKFILE_DIR}} conda run --no-capture-output -n {{.CONDA_ENV}} python src/main.py
 
-  test:
-    desc: Run tests for ehub-core
-    cmds:
-      - conda run -n {{.CONDA_ENV}} pytest tests/unit -v

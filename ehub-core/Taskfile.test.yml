@@ -6,6 +6,7 @@ vars:
   APP_WF_ID: 'app-infra-test-{{.USER | default "user"}}'
   CICD_WF_ID: 'cicd-test-{{.USER | default "user"}}'
 
+  
 tasks:
   # ========================================================================
   # CORE INFRASTRUCTURE WORKFLOW
@@ -20,7 +21,7 @@ tasks:
           --task-queue ehub-core-infra \
           --type CoreInfraWorkflow \
           --workflow-id {{.CORE_WF_ID}} \
-          --input '{"project_id": "test-project", "region": "us-east-1"}'
+          --input '{"project_id": "test-project", "region": "us-east-1", "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMZf1kCSt+0VY7yB3AVJOsd28R/ozsuOEQkMyVcpS+0W yogi@yogi-mac-2025.local"}'
 
   core-approve:
     desc: "[Core] Signal: Approve"
@@ -41,6 +42,24 @@ tasks:
           --workflow-id {{.CORE_WF_ID}} \
           --name approve \
           --input '{"approved": false, "cidr": "10.0.0.0/16"}'
+
+  core-update:
+    desc: "[Core] Signal: Update"
+    cmds:
+      - |
+        temporal workflow signal \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CORE_WF_ID}} \
+          --name update
+
+  core-decomission:
+    desc: "[Core] Signal: Decomission"
+    cmds:
+      - |
+        temporal workflow signal \
+          --address {{.TEMPORAL_ADDR}} \
+          --workflow-id {{.CORE_WF_ID}} \
+          --name decomission
 
   core-query:
     desc: "[Core] Query state"
@@ -73,6 +92,24 @@ tasks:
       - sleep 2
       - task: core-reject
 
+  core-full-update:
+    desc: "[Core] E2E: Start + Approve + Update"
+    cmds:
+      - task: core-start
+      - sleep 2
+      - task: core-approve
+      - sleep 5
+      - task: core-update
+
+  core-full-decomission:
+    desc: "[Core] E2E: Start + Approve + Decomission"
+    cmds:
+      - task: core-start
+      - sleep 2
+      - task: core-approve
+      - sleep 5
+      - task: core-decomission
+
   # ========================================================================
   # APPLICATION INFRASTRUCTURE WORKFLOW
   # ========================================================================
@@ -81,18 +118,23 @@ tasks:
     desc: "[App] Start Workflow"
     cmds:
       - |
+        CORE_INFRA=$(task --silent test:core-query | tail -1 | sed 's/  QueryResult  //' | jq)
+        VPC_ID=$(echo $CORE_INFRA | jq -r .vpc_id)
+        SUBNET_ID=$(echo $CORE_INFRA | jq -r .subnet_ids[0])
+        SECURITY_GROUP_ID=$(echo $CORE_INFRA | jq -r .security_group_id)
+        KEY_NAME=$(echo $CORE_INFRA | jq -r .key_name)
         temporal workflow start \
           --address {{.TEMPORAL_ADDR}} \
           --task-queue ehub-app-infra \
           --type AppInfraWorkflow \
           --workflow-id {{.APP_WF_ID}} \
-          --input '{"size": "large"}'
+          --input "{\"size\": \"t3.micro\", \"vpc_id\": \"$VPC_ID\", \"subnet_id\": \"$SUBNET_ID\", \"security_group_id\": \"$SECURITY_GROUP_ID\", \"key_name\": \"$KEY_NAME\"}"
 
-  app-terminate:
-    desc: "[App] Terminate Workflow"
+  app-result:
+    desc: "[App] Query state"
     cmds:
       - |
-        temporal workflow terminate \
+        temporal workflow result \
           --address {{.TEMPORAL_ADDR}} \
           --workflow-id {{.APP_WF_ID}}
 
