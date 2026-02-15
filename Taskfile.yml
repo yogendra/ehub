@@ -29,8 +29,8 @@ tasks:
       - conda run -n {{.CONDA_ENV}} black --check .
       - conda run -n {{.CONDA_ENV}} mypy .
 
-  test:
-    desc: Run all tests
+  temporal:
+    desc: Run temporal
     cmds:
-      - task: core:test
-      - task: cli:test
+      - temporal server start-dev --db-filename {{.ROOT_DIR}}/temporal.db
+      -
