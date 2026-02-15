@@ -8,15 +8,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_tf_client(activity_name: str, workflow_id: str):
-    # TFWrapper handles the base directory (tf_root) internally.
-    # We just need to provide the relative path to the core project
-    # and the specific state file path (relative to the project's states/ dir).
-    working_dir = f"core/{activity_name}"
-    state_file_path = f"{workflow_id}"
-    return TFWrapper(working_dir=working_dir, state_file_path=state_file_path)
-
-
 @activity.defn
 async def provision_vpc(request: dict[str, Any]) -> dict:
     info = activity.info()
@@ -31,19 +22,22 @@ async def provision_vpc(request: dict[str, Any]) -> dict:
         f"Provisioning actual VPC with CIDR {vpc_cidr} in {region} for workflow {workflow_id}"
     )
 
-    tf = get_tf_client("vpc", workflow_id)
-    tf.init()
-    tfvars = {"region": region, "vpc_cidr": vpc_cidr, "project_id": project_id}
-    result = tf.apply(vars=tfvars, destroy=destroy)
+    tf = TFWrapper(working_dir="core/vpc", state_file_path=project_id)
+    try:
+        tf.init()
+        tfvars = {"region": region, "vpc_cidr": vpc_cidr, "project_id": project_id}
+        result = tf.apply(vars=tfvars, destroy=destroy)
 
-    if result.rc != 0:
-        activity.logger.error(f"Terraform failed: {result.stderr}")
-        raise Exception(f"Terraform failed: {result.stderr}")
+        if result.rc != 0:
+            activity.logger.error(f"Terraform failed: {result.stderr}")
+            raise Exception(f"Terraform failed: {result.stderr}")
 
-    return {
-        "vpc_id": result.get_output_value("vpc_id"),
-        "subnet_ids": result.get_output_value("subnet_ids"),
-    }
+        return {
+            "vpc_id": result.get_output_value("vpc_id"),
+            "subnet_ids": result.get_output_value("subnet_ids"),
+        }
+    finally:
+        tf.cleanup()
 
 
 @activity.defn
@@ -58,16 +52,19 @@ async def provision_sg(request: dict[str, Any]) -> dict:
 
     activity.logger.info(f"Provisioning security groups for VPC {vpc_id} in {region}")
 
-    tf = get_tf_client("sg", workflow_id)
-    tf.init()
-    tfvars = {"region": region, "vpc_id": vpc_id, "project_id": project_id}
-    result = tf.apply(vars=tfvars, destroy=destroy)
+    tf = TFWrapper(working_dir="core/sg", state_file_path=project_id)
+    try:
+        tf.init()
+        tfvars = {"region": region, "vpc_id": vpc_id, "project_id": project_id}
+        result = tf.apply(vars=tfvars, destroy=destroy)
 
-    if result.rc != 0:
-        activity.logger.error(f"Terraform failed: {result.stderr}")
-        raise Exception(f"Terraform failed: {result.stderr}")
+        if result.rc != 0:
+            activity.logger.error(f"Terraform failed: {result.stderr}")
+            raise Exception(f"Terraform failed: {result.stderr}")
 
-    return {"security_group_id": result.get_output_value("security_group_id")}
+        return {"security_group_id": result.get_output_value("security_group_id")}
+    finally:
+        tf.cleanup()
 
 
 @activity.defn
@@ -82,13 +79,16 @@ async def provision_sshkey(request: dict[str, Any]) -> dict:
 
     activity.logger.info(f"Adding ssh key in {region}")
 
-    tf = get_tf_client("sshkey", workflow_id)
-    tf.init()
-    tfvars = {"region": region, "project_id": project_id, "public_key": public_key}
-    result = tf.apply(vars=tfvars, destroy=destroy)
+    tf = TFWrapper(working_dir="core/sshkey", state_file_path=project_id)
+    try:
+        tf.init()
+        tfvars = {"region": region, "project_id": project_id, "public_key": public_key}
+        result = tf.apply(vars=tfvars, destroy=destroy)
 
-    if result.rc != 0:
-        activity.logger.error(f"Terraform failed: {result.stderr}")
-        raise Exception(f"Terraform failed: {result.stderr}")
+        if result.rc != 0:
+            activity.logger.error(f"Terraform failed: {result.stderr}")
+            raise Exception(f"Terraform failed: {result.stderr}")
 
-    return {"key_name": result.get_output_value("key_name")}
+        return {"key_name": result.get_output_value("key_name")}
+    finally:
+        tf.cleanup()
