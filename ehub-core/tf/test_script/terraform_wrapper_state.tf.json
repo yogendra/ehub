@@ -1,9 +1,0 @@
-{
-  "terraform": {
-    "backend": {
-      "local": {
-        "path": "/Users/yogi/ws/my/learn/temporal/ehub/ehub-core/tf/test_script/terraform.tfstate"
-      }
-    }
-  }
-}
