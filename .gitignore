@@ -24,3 +24,4 @@ venv.bak/
 .idea/
 .DS_Store
 target/
+ehub-core/worker.log
