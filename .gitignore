@@ -25,3 +25,5 @@ venv.bak/
 .DS_Store
 target/
 ehub-core/worker.log
+ehub-core/tf_states
+temporal.db
