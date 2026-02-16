@@ -215,3 +215,21 @@ Pre-requisites
     ```bash
     conda deactivate
     ```
+
+## Tasks
+
+| Task                          | Description                                           |
+| :---------------------------- | :---------------------------------------------------- |
+| `setup`                       | Set up the project (conda)                            |
+| `lint`                        | Run linting tools                                     |
+| `temporal`                    | Run local Temporal server                             |
+| `core:run`                    | Run the worker                                        |
+| `core:test:core-start`        | Create a core infrastructure deployment               |
+| `core:test:core-approve`      | Approve the core infrastructure deployment            |
+| `core:test:core-query`        | Query the state of the core infrastructure deployment |
+| `core:test:core-decommission` | Trigger core infrastructure decommission              |
+| `core:test:app-start`         | Create an application infrastructure deployment       |
+| `core:test:app-result`        | Get the deployed application URL                      |
+| `ghr:run`                     | Run self-hosted GitHub runner container               |
+| `ghr:logs`                    | View GitHub runner logs                               |
+| `ghr:restart`                 | Restart the GitHub runner                             |
