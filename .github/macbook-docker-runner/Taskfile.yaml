@@ -1,0 +1,95 @@
+version: "3"
+
+vars:
+  GITHUB_PAT: '{{.GITHUB_PAT | default ""}}'
+  REPO_URL: '{{.REPO_URL | default ""}}'
+  RUNNER_NAME: '{{.RUNNER_NAME | default "macbook-docker-runner"}}'
+  RUNNER_LABELS: '{{.RUNNER_LABELS | default "self-hosted,mac-docker,arm64"}}'
+  IMAGE_NAME: '{{.IMAGE_NAME | default "github-self-hosted-runner"}}'
+  IMAGE_TAG: '{{.IMAGE_TAG | default "latest"}}'
+  CONTAINER_NAME: '{{.CONTAINER_NAME | default "github-runner"}}'
+
+tasks:
+  build:
+    desc: Build the GitHub Actions runner Docker image
+    cmds:
+      - docker buildx build --platform linux/amd64,linux/arm64 --output=type=docker -t {{.IMAGE_NAME}}:{{.IMAGE_TAG}} .
+
+  # Internal helper tasks (prefixed with _)
+  _stop-if-exists:
+    internal: true
+    cmds:
+      - docker stop --timeout 30 {{.CONTAINER_NAME}} 2>/dev/null || true
+
+  _remove-if-exists:
+    internal: true
+    cmds:
+      - docker rm -f {{.CONTAINER_NAME}} 2>/dev/null || true
+
+  run:
+    desc: Run the GitHub Actions runner container
+    deps: [build]
+    cmds:
+      - task: _stop-if-exists
+      - task: _remove-if-exists
+      - |
+        docker run -d \
+          --name {{.CONTAINER_NAME}} \
+          --hostname {{.RUNNER_NAME}} \
+          -e GITHUB_PAT="{{.GITHUB_PAT}}" \
+          -e REPO_URL="{{.REPO_URL}}" \
+          -e RUNNER_NAME="{{.RUNNER_NAME}}" \
+          -e RUNNER_LABELS="{{.RUNNER_LABELS}}" \
+          {{.IMAGE_NAME}}:{{.IMAGE_TAG}}
+
+  stop:
+    desc: Stop the GitHub Actions runner container (gracefully with 30s timeout)
+    preconditions:
+      - sh: docker inspect {{.CONTAINER_NAME}} > /dev/null 2>&1
+        msg: "Container {{.CONTAINER_NAME}} does not exist"
+    cmds:
+      - docker stop --timeout 30 {{.CONTAINER_NAME}}
+
+  remove:
+    desc: Remove the GitHub Actions runner container
+    preconditions:
+      - sh: docker inspect {{.CONTAINER_NAME}} > /dev/null 2>&1
+        msg: "Container {{.CONTAINER_NAME}} does not exist"
+    cmds:
+      - docker rm -f {{.CONTAINER_NAME}}
+
+  logs:
+    desc: View logs from the GitHub Actions runner container
+    preconditions:
+      - sh: docker inspect {{.CONTAINER_NAME}} > /dev/null 2>&1
+        msg: "Container {{.CONTAINER_NAME}} does not exist. Run 'task run' first."
+    cmds:
+      - docker logs -f {{.CONTAINER_NAME}}
+
+  shell:
+    desc: Open a shell in the running container
+    preconditions:
+      - sh: docker inspect {{.CONTAINER_NAME}} > /dev/null 2>&1
+        msg: "Container {{.CONTAINER_NAME}} does not exist. Run 'task run' first."
+      - sh: docker inspect -f '{{`{{.State.Running}}`}}' {{.CONTAINER_NAME}} | grep -q true
+        msg: "Container {{.CONTAINER_NAME}} is not running. Run 'task run' first."
+    cmds:
+      - docker exec -it {{.CONTAINER_NAME}} /bin/bash
+
+  restart:
+    desc: Restart the GitHub Actions runner
+    cmds:
+      - task: _stop-if-exists
+      - task: _remove-if-exists
+      - task: run
+
+  clean:
+    desc: Stop, remove container and clean up Docker image
+    cmds:
+      - task: _remove-if-exists
+      - docker rmi {{.IMAGE_NAME}}:{{.IMAGE_TAG}} || true
+
+  status:
+    desc: Check the status of the runner container
+    cmds:
+      - docker ps -a --filter "name={{.CONTAINER_NAME}}"
