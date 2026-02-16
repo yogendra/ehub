@@ -13,6 +13,9 @@ includes:
   cli:
     taskfile: ehub-cli/Taskfile.yml
     dir: ehub-cli
+  ghr:
+    taskfile: .github/macbook-docker-runner/Taskfile.yml    
+    dir: .github/macbook-docker-runner
 
 tasks:
   setup:
