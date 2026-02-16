@@ -9,10 +9,6 @@ In this project has 3 parts
 2. ehub-cli : CLI for interacting with the ehub [WIP]
 3. ehub-sample-project : Sample project for testing CI/CD portion of the ehub [WIP]
 
-## End User Documentation
-
-A visual walkthrough is present under [docs/walkthrough]
-
 ## Developer Guide
 
 ### Quick Start with Docker
