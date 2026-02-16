@@ -46,19 +46,4 @@ tasks:
     desc: View temporal logs
     cmds:
       - tail -f {{.ROOT_DIR}}/temporal.log
-  tunnel:
-    desc: Run tunnel
-    cmds:
-      - |
-        nohup cloudflared tunnel run t1 &> {{.ROOT_DIR}}/cloudflared-tunnel.log &
-        nohup cloudflared access tcp --hostname temporal-demo.yogendra.me --listener localhost:7233 &> {{.ROOT_DIR}}/cloudflared-access.log &
-        sleep 1
-  tunnel:stop:
-    desc: Stop tunnel
-    cmds:
-      - pkill -f "cloudflared access tcp" || true
-      - pkill -f "cloudflared tunnel run" || true
-  tunnel:logs:
-    desc: View tunnel logs
-    cmds:
-      - tail -f {{.ROOT_DIR}}/cloudflared-tunnel.log {{.ROOT_DIR}}/cloudflared-access.log
+  
