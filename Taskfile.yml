@@ -4,7 +4,6 @@ vars:
   CONDA_ENV: ehub
   PROJECT_DIR: "{{.ROOT_DIR}}"
 
-
 includes:
   core:
     taskfile: ehub-core/Taskfile.yml
@@ -14,7 +13,7 @@ includes:
   cli:
     taskfile: ehub-cli/Taskfile.yml
     dir: ehub-cli
-    
+
 tasks:
   setup:
     desc: Set up the project (conda)
@@ -32,5 +31,34 @@ tasks:
   temporal:
     desc: Run temporal
     cmds:
-      - temporal server start-dev --db-filename {{.ROOT_DIR}}/temporal.db
-      -
+      - |
+        nohup temporal server start-dev --db-filename {{.ROOT_DIR}}/temporal.db &> {{.ROOT_DIR}}/temporal.log &
+        sleep 1
+  temporal:stop:
+    desc: Stop temporal
+    cmds:
+      - pkill -f "temporal server start-dev"
+  temporal:status:
+    desc: Check temporal status
+    cmds:
+      - ps -eafwww | grep "temporal server start-dev" | grep -v grep
+  temporal:logs:
+    desc: View temporal logs
+    cmds:
+      - tail -f {{.ROOT_DIR}}/temporal.log
+  tunnel:
+    desc: Run tunnel
+    cmds:
+      - |
+        nohup cloudflared tunnel run t1 &> {{.ROOT_DIR}}/cloudflared-tunnel.log &
+        nohup cloudflared access tcp --hostname temporal-demo.yogendra.me --listener localhost:7233 &> {{.ROOT_DIR}}/cloudflared-access.log &
+        sleep 1
+  tunnel:stop:
+    desc: Stop tunnel
+    cmds:
+      - pkill -f "cloudflared access tcp" || true
+      - pkill -f "cloudflared tunnel run" || true
+  tunnel:logs:
+    desc: View tunnel logs
+    cmds:
+      - tail -f {{.ROOT_DIR}}/cloudflared-tunnel.log {{.ROOT_DIR}}/cloudflared-access.log
