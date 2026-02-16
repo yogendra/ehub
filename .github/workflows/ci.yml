@@ -29,7 +29,6 @@ jobs:
         env:
           TEMPORAL_ADDRESS: ${{ secrets.TEMPORAL_ADDRESS }}
           TEMPORAL_NAMESPACE: ${{ secrets.TEMPORAL_NAMESPACE }}
-          TEMPORAL_API_KEY: ${{ secrets.TEMPORAL_API_KEY }}
           TEMPORAL_WORKFLOW_TYPE: ${{ secrets.TEMPORAL_WORKFLOW_TYPE }}
           TEMPORAL_WORKFLOW_QUEUE: ${{ secrets.TEMPORAL_WORKFLOW_QUEUE }}
         run: |
@@ -39,5 +38,4 @@ jobs:
             --task-queue "$TEMPORAL_WORKFLOW_QUEUE" \
             --address "${TEMPORAL_ADDRESS}" \
             --namespace "${TEMPORAL_NAMESPACE}" \
-            --api-key "${TEMPORAL_API_KEY}" \
             --input '{"project": "ehub-sample-project", "sha": "${{ github.sha }}"}'
