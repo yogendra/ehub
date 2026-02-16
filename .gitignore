@@ -27,3 +27,6 @@ target/
 ehub-core/worker.log
 ehub-core/tf_states
 temporal.db
+cloudflared-access.log
+cloudflared-tunnel.log
+temporal.log
