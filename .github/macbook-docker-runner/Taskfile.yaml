@@ -26,7 +26,8 @@ tasks:
     cmds:
       - docker rm -f {{.CONTAINER_NAME}} 2>/dev/null || true
 
-  run:
+  start:
+    aliases: [run]
     desc: Run the GitHub Actions runner container
     deps: [build]
     cmds:
@@ -40,6 +41,8 @@ tasks:
           -e REPO_URL="{{.REPO_URL}}" \
           -e RUNNER_NAME="{{.RUNNER_NAME}}" \
           -e RUNNER_LABELS="{{.RUNNER_LABELS}}" \
+          --add-host host.docker.internal:host-gateway \
+          --add-host temporal:host-gateway \
           {{.IMAGE_NAME}}:{{.IMAGE_TAG}}
 
   stop:
