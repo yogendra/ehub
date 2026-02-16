@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "ehub-sample-project/**"
+      - ".github/workflows/ci.yml"
   pull_request:
     paths:
       - "ehub-sample-project/**"
