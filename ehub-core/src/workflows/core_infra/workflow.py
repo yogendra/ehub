@@ -163,7 +163,7 @@ class CoreInfraWorkflow:
         self.state.decided = True
 
     @workflow.signal
-    def decomission(self) -> None:
+    def decommission(self) -> None:
         """Signal to decommission the hardware."""
         self.state.status = "DELETED"
 

@@ -52,14 +52,14 @@ tasks:
           --workflow-id {{.CORE_WF_ID}} \
           --name update
 
-  core-decomission:
-    desc: "[Core] Signal: Decomission"
+  core-decommission:
+    desc: "[Core] Signal: Decommission"
     cmds:
       - |
         temporal workflow signal \
           --address {{.TEMPORAL_HOST}} \
           --workflow-id {{.CORE_WF_ID}} \
-          --name decomission
+          --name decommission
 
   core-query:
     desc: "[Core] Query state"
@@ -101,14 +101,14 @@ tasks:
       - sleep 5
       - task: core-update
 
-  core-full-decomission:
-    desc: "[Core] E2E: Start + Approve + Decomission"
+  core-full-decommission:
+    desc: "[Core] E2E: Start + Approve + Decommission"
     cmds:
       - task: core-start
       - sleep 2
       - task: core-approve
       - sleep 5
-      - task: core-decomission
+      - task: core-decommission
 
   # ========================================================================
   # APPLICATION INFRASTRUCTURE WORKFLOW
